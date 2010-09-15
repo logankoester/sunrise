@@ -39,7 +39,7 @@ def setup_sunrise_client(options = nil)
 end
 
 program :name, 'Sunrise Uploader'
-program :version, '0.0.1'
+program :version, '0.0.2'
 program :description, 'Command-line uploader for Sunrise (http://sunrisehq.com)'
 global_option('--verbose', 'Display non-critical status information') { $verbose = true }
 global_option('--growl', 'Use growl notifications (Mac OS X only)')   { $growl = true }
