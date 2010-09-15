@@ -10,12 +10,13 @@ module Sunrise
     end
 
     def upload(file, team, name = nil)
+      file = File.new(file) if file.is_a? String
       name = default_name(file) unless name
-      url = "http://#{@login}:#{@password}@#{team}.sunrisehq.local:3000/upload.json"
+      url = "http://#{@login}:#{@password}@#{team}.#{@host}:#{@port}/upload.json"
       @response = RestClient.post url,
         :item => {
           :type  => 'Screenshot',
-          :image => File.new(file),
+          :image => file,
           :name  => name,
         },
         :content_type => :json,
