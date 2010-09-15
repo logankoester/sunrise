@@ -6,11 +6,14 @@ begin
   Jeweler::Tasks.new do |gem|
     gem.name = "sunrise"
     gem.summary = %Q{Command-line uploader for Sunrise (http://sunrisehq.com)}
-    gem.description = %Q{TODO: longer description of your gem}
+    gem.description = %Q{Ruby library for the Sunrise API and command-line upload tool}
     gem.email = "logan@logankoester.com"
     gem.homepage = "http://github.com/logankoester/sunrise"
     gem.authors = ["Logan Koester"]
     gem.add_development_dependency "thoughtbot-shoulda", ">= 0"
+    gem.add_dependency "commander"
+    gem.add_dependency "rest_client"
+    gem.executables = ["sunrise"]
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
   Jeweler::GemcutterTasks.new

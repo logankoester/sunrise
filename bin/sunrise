@@ -1,0 +1,135 @@
+#!/usr/bin/env ruby
+
+require 'yaml'
+require 'json'
+require 'rubygems'
+require 'commander/import'
+require 'lib/sunrise.rb'
+
+CONFIG_FNAME = "#{ENV['HOME']}/.sunrisehq"
+DEVCONFIG_FNAME = "#{ENV['HOME']}/.sunrisehq-dev"
+
+# Load settings from the config and developer config files,
+# and apply current overrides from options
+def settings(options = nil)
+  if File.exists?(CONFIG_FNAME)
+    settings = YAML.load( File.read(CONFIG_FNAME) )
+  else
+    settings = {}
+  end
+  if options
+    # Override default settings with command-line options
+    settings.merge!({ 'login'        => options['login'] }) if options['login']
+    settings.merge!({ 'password'     => options['password'] }) if options['password']
+    settings.merge!({ 'default_team' => options['team'] }) if options['team']
+  end
+  if File.exists?(DEVCONFIG_FNAME)
+    # Merge in developer settings as well
+    settings.merge!( YAML.load( File.read(DEVCONFIG_FNAME) ) )
+  else
+    # Set default (production) host/port
+    settings.merge!({ 'host' => 'sunrisehq.com', 'port' => 80 })
+  end
+  settings
+end
+
+# Get a properly configured sunrise::Client
+def setup_sunrise_client(options = nil)
+  Sunrise::Client.new(settings(options)['login'], settings(options)['password'], settings(options)['host'], settings(options)['port'])
+end
+
+program :name, 'Sunrise Uploader'
+program :version, '0.0.1'
+program :description, 'Command-line uploader for Sunrise (http://sunrisehq.com)'
+global_option('--verbose', 'Display non-critical status information') { $verbose = true }
+global_option('--growl', 'Use growl notifications (Mac OS X only)')   { $growl = true }
+
+if File.exists? CONFIG_FNAME
+  default_command :upload
+else
+  default_command :setup
+end
+
+command :setup do |c|
+  c.syntax = "sunrise setup"
+  c.description = "Configure your Sunrise account (interactive)"
+  c.action do |args, options|
+    say "Welcome to Sunrise! Please answer a few questions to setup your account.\n\n" unless File.exists? CONFIG_FNAME
+
+    @login = ask "SunriseHQ Login (username): "
+    @password = password "SunriseHQ Password: ", "*"
+
+    # Fetch a list of teams from this Sunrise account
+    say "\nValidating your credentials...\n"
+    sunrise = setup_sunrise_client({'login' => @login, 'password' => @password})
+    teams = sunrise.teams
+
+    # Set a default team to upload to
+    @team = (teams.size > 1) ? choose("Choose a default team:", *teams) : teams.first
+
+    @new_settings = { 'login' => @login, 'password' => @password, 'default_team' => @team }
+    File.open(CONFIG_FNAME, 'w') { |f| f << @new_settings.to_yaml }
+    say "\nSettings written to #{CONFIG_FNAME}"
+    say "You may now begin using Sunrise!"
+  end
+end
+
+command :upload do |c|
+  c.syntax = 'sunrise upload <file> [name]'
+  c.description = 'Upload a file to your Sunrise account'
+  c.option '--login LOGIN', String, 'Use a different Sunrise account'
+  c.option '--password PASSWORD', String, 'Password for your Sunrise account'
+  c.option '--team TEAM', String, 'Override the default team'
+
+  c.action do |args, options|
+    if args.first
+      @file = File.open(args.first)
+
+      # Upload the file
+      log "Using login '#{settings(options)['login']}'\n" if $verbose
+      log "Uploading #{args.first} to team '#{settings(options)['default_team']}'\n" if $verbose
+      sunrise = setup_sunrise_client(options)
+      sunrise.upload @file, settings(options)['default_team'], args[1]
+      
+      # Parse and display the response
+      result = JSON.parse(sunrise.response.body)
+      if result['errors']
+        result['errors'].each do |error|
+          say "#{error[0]}: #{error[1]}"
+        end
+        say "File was not uploaded"
+        notify_error "File was not uploaded" if $growl
+      else
+        say result['notice'] if $verbose
+        notify_ok result['notice'] if $growl
+      end
+    else
+      say "Usage: sunrise upload <file> [name]"
+      say "Try sunrise --help for full documentation"
+    end
+  end
+end
+
+command :teams do |c|
+  c.syntax = 'sunrise teams'
+  c.description = 'List the teams you are a member of'
+  c.option '--login LOGIN', String, 'Use a different Sunrise account'
+  c.option '--password PASSWORD', String, 'Password for your Sunrise account'
+  c.action do |args, options|
+    sunrise = setup_sunrise_client(options)
+    say sunrise.teams.join("\n")
+  end
+end
+
+command :developer do |c|
+  c.syntax = 'sunrise developer'
+  c.description = 'Set special options only relevant to the SunriseHQ Development Team'
+  c.action do |args, options|
+    @host = ask "SunriseHQ Server Host: "
+    @port = ask "SunriseHQ Server Port: "
+
+    @developer_settings = { 'host' => @host, 'port' => @port }
+    File.open(DEVCONFIG_FNAME, 'w') { |f| f << @developer_settings.to_yaml }
+    say "\nSettings written to #{DEVCONFIG_FNAME}"
+  end
+end

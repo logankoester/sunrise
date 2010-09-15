@@ -1,6 +1,25 @@
-= sunrise
+= Sunrise Ruby Library & Command-Line Uploader
 
-Description goes here.
+This Ruby gem aims to provide a reference implementation for developers working with the
+Sunrise API. It also includes a handy command-line tool for uploading files to your account.
+
+== Getting Started
+First, install the gem (assuming you already have Ruby and Rubygems on your system)
+  gem install sunrise
+
+Now you'll want to create a configuration file with your Sunrise account details.
+
+This will ask you for your login, password, and if you have more than one team, which
+to use as the default.
+  sunrise setup
+
+Now that's taken care of, uploading a file is as easy as
+  sunrise upload yourfile.jpg "My File"
+
+Full documentation can be accessed with
+  sunrise --help
+
+Enjoy!
 
 == Note on Patches/Pull Requests
  
