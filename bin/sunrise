@@ -4,7 +4,7 @@ require 'yaml'
 require 'json'
 require 'rubygems'
 require 'commander/import'
-require 'lib/sunrise.rb'
+require File.dirname(__FILE__) + '/../lib/sunrise.rb'
 
 CONFIG_FNAME = "#{ENV['HOME']}/.sunrisehq"
 DEVCONFIG_FNAME = "#{ENV['HOME']}/.sunrisehq-dev"
