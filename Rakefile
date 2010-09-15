@@ -12,7 +12,7 @@ begin
     gem.authors = ["Logan Koester"]
     gem.add_development_dependency "thoughtbot-shoulda", ">= 0"
     gem.add_dependency "commander"
-    gem.add_dependency "rest-client"
+    gem.add_dependency "rest-client", ">= 1.6.1"
     gem.executables = ["sunrise"]
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
