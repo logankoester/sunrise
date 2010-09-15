@@ -35,7 +35,7 @@ module Sunrise
     # If no name for an upload is specified, set a default name using the 
     # first part of the filename.
     def default_name(file)
-      File.basename(file)
+      File.basename(file.path)
     end
   end
 
